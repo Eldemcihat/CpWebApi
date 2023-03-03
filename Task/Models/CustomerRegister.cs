@@ -1,0 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Task.Models
+{
+    public class CustomerRegister
+    {
+        public required string Name { get; set; }
+        public required string Password { get; set; }
+        public required string Mail { get; set; }
+        public required string Msisdn { get; set; }
+
+    }
+}
