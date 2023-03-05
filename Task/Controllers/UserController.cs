@@ -1,6 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
 using Task.Business.Abstract;
 using Task.Models;
 
@@ -12,21 +16,63 @@ namespace Task.Controllers
     {
         private readonly IUserService userService;
         private readonly IMemoryCache memoryCache;
+        private readonly IConfiguration configuration;
         private const string CachePrefix = "User_";
-        public UserController(IUserService userService, IMemoryCache memoryCache)
+        public UserController(IUserService userService, IMemoryCache memoryCache, IConfiguration configuration)
         {
             this.userService = userService;
             this.memoryCache = memoryCache;
+            this.configuration = configuration;
         }
 
-        [Authorize(Roles = "Admin")]
+
+        private string GenerateToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.Role, user.Roles),
+                new Claim(ClaimTypes.Email,user.Mail),
+                new Claim(ClaimTypes.MobilePhone,user.Msisdn)
+            };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddDays(1),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value)),
+                    SecurityAlgorithms.HmacSha512Signature
+                )
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
+        }
+        //[Authorize(Roles = "Admin")]
         [HttpPost("register")]
         public ActionResult<User> Register(UserRegister request)
         {
+            var password = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            var user = new User()
+            {
+                Name = request.Name,
+                Password = password,
+                Mail = request.Mail,
+                Msisdn = request.Msisdn,
+                Roles = request.Roles
+            };
+
             var result = userService.Add(request);
             var cacheKey = $"{CachePrefix}GetById_{result.Id}";
             memoryCache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
-            return result;
+
+            string token = GenerateToken(result);
+
+            var response = new { Token = token };
+            return Ok(response);
         }
 
         [HttpPost("login")]
@@ -39,8 +85,12 @@ namespace Task.Controllers
                 return userService.GetUser(request);
             });
 
-            return result;
+            string token = GenerateToken(result);
+
+            var response = new { Token = token };
+            return Ok(response);
         }
+
         [Authorize(Roles = "Admin")]
         [HttpGet("GetAll")]
         public IEnumerable<User> Get()
@@ -51,7 +101,7 @@ namespace Task.Controllers
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10);
                 var users = userService.GetAll();
-                return users.Select(u => new User { Mail = u.Mail, Msisdn = u.Msisdn, Name = u.Name, Token = u.Token, Roles = u.Roles, Password = u.Password, Id = u.Id }).ToList();
+                return users.Select(u => new User { Mail = u.Mail, Msisdn = u.Msisdn, Name = u.Name, Roles = u.Roles, Password = u.Password, Id = u.Id }).ToList();
             });
 
             return result;

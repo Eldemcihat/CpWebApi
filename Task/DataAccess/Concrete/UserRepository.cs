@@ -29,11 +29,6 @@ namespace Task.DataAccess.Concrete
             };
             productCustomerContext.Users.Add(user);
             productCustomerContext.SaveChanges();
-
-            string token = CreateToken(user);
-            user.Token = token;
-            productCustomerContext.SaveChanges();
-
             return user;
         }
 
@@ -48,29 +43,6 @@ namespace Task.DataAccess.Concrete
 
             return user;
         }
-        public string CreateToken(User user)
-        {
-            List<Claim> claims = new List<Claim>{
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.Role, user.Roles)
-        };
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value)),
-                    SecurityAlgorithms.HmacSha512Signature
-                )
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
-        }
-
         public void RoleAssignment(int Id, string role)
         {
             var user = productCustomerContext.Users.FirstOrDefault(u => u.Id == Id);

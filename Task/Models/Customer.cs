@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Task;
+﻿namespace Task;
 
 public partial class Customer
 {
@@ -10,8 +7,6 @@ public partial class Customer
     public string Name { get; set; } = null!;
 
     public string Password { get; set; } = null!;
-
-    public string Token { get; set; } = null!;
 
     public string Mail { get; set; } = null!;
 

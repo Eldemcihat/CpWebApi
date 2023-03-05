@@ -16,6 +16,4 @@ public partial class User
     public string Password { get; set; } = null!;
 
     public string? Roles { get; set; }
-
-    public string? Token { get; set; }
 }

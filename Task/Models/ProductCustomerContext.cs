@@ -61,7 +61,6 @@ public partial class ProductCustomerContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.Password).HasMaxLength(100);
             entity.Property(e => e.Roles).HasMaxLength(30);
-            entity.Property(e => e.Token);
         });
 
         OnModelCreatingPartial(modelBuilder);

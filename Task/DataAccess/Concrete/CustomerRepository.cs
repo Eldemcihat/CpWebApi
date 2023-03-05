@@ -24,17 +24,10 @@ namespace Task.DataAccess.Concrete
                 Name = request.Name,
                 Password = password,
                 Mail = request.Mail,
-                Msisdn = request.Msisdn
-
+                Msisdn = request.Msisdn,
             };
             productCustomerContext.Customers.Add(customer);
-            string token = CreateToken(customer);
-
-            customer.Token = token;
-
             productCustomerContext.SaveChanges();
-
-
             return customer;
         }
 
@@ -48,28 +41,6 @@ namespace Task.DataAccess.Concrete
             }
 
             return customer;
-        }
-
-        public string CreateToken(Customer customer)
-        {
-            List<Claim> claims = new List<Claim>{
-            new Claim(ClaimTypes.Name, customer.Name)
-        };
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetSection("AppSettings:Token").Value)),
-                    SecurityAlgorithms.HmacSha512Signature
-                )
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
         }
     }
 }

@@ -97,15 +97,9 @@ namespace Task.Business.Concrete
                 return false;
             }
         }
-
         public void RoleAssignment(int Id, string role)
         {
             userRepository.RoleAssignment(Id, role);
-        }
-
-        public void RoleAssignment(string Name, string role)
-        {
-            throw new NotImplementedException();
         }
     }
 }
