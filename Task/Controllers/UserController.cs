@@ -51,7 +51,7 @@ namespace Task.Controllers
 
             return tokenHandler.WriteToken(token);
         }
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("register")]
         public ActionResult<User> Register(UserRegister request)
         {
@@ -125,11 +125,22 @@ namespace Task.Controllers
         [HttpPut("Update")]
         public User Update([FromBody] User entity)
         {
+            var user = userService.GetById(entity.Id);
+            user.Mail = entity.Mail;
+            user.Msisdn = entity.Msisdn;
+            user.Roles = entity.Roles;
+
+            if (!string.IsNullOrEmpty(entity.Password))
+            {
+                user.Password = entity.Password;
+            }
+
             var cacheKey = $"{CachePrefix}Update_{entity.Id}";
-            var result = userService.Update(entity);
+            var result = userService.Update(user);
             memoryCache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
             return result;
         }
+
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("Delete{id}")]
